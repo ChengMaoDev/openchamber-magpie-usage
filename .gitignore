@@ -1,0 +1,6 @@
+node_modules/
+release/
+.ruff_cache/
+__pycache__/
+.DS_Store
+test-results/

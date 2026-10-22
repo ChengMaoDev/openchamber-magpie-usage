@@ -1,0 +1,186 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--oc-bg);
+  color: var(--oc-fg);
+}
+#app {
+  padding: 16px;
+  max-width: 920px;
+  margin: auto;
+}
+h1,
+h2,
+p {
+  margin: 0;
+}
+h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.muted {
+  color: var(--oc-muted);
+  font-size: 0.82rem;
+}
+.topline,
+.section-heading,
+.quota-heading,
+.window-heading,
+.rank-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.topline {
+  margin-bottom: 6px;
+}
+.section-heading {
+  margin: 22px 0 10px;
+}
+.status {
+  min-height: 1.4em;
+}
+.controls {
+  margin: 14px 0;
+}
+.notice:empty {
+  display: none;
+}
+.notice {
+  margin: 10px 0;
+}
+.quota-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 10px;
+}
+.quota {
+  min-width: 0;
+  padding: 13px;
+  border-radius: var(--oc-radius);
+  background: var(--oc-muted-surface);
+}
+.quota-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.quota-identity {
+  min-width: 0;
+  flex: 1;
+}
+.account-setting {
+  margin: 10px 0;
+}
+#app .quota-progress .oc-sdk-progress-label {
+  display: none;
+}
+.quota-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.account {
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.window {
+  margin-top: 13px;
+}
+.window-heading {
+  font-size: 0.82rem;
+  margin-bottom: 5px;
+}
+.window-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.window-value {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.window-meta {
+  margin-top: 5px;
+  font-size: 0.75rem;
+  color: var(--oc-muted);
+  overflow-wrap: anywhere;
+}
+.error {
+  color: var(--oc-error-text);
+  font-size: 0.82rem;
+  margin-top: 7px;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 16px 0 10px;
+}
+.metric-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-top: 3px;
+}
+.metric-detail {
+  font-size: 0.75rem;
+  color: var(--oc-muted);
+  margin-top: 2px;
+}
+.rank {
+  margin-top: 12px;
+}
+.rank-row {
+  padding: 7px 0;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+.rank-name {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.rank-value {
+  white-space: nowrap;
+  color: var(--oc-muted);
+  font-variant-numeric: tabular-nums;
+}
+.metric-value {
+  overflow-wrap: anywhere;
+}
+.footnote {
+  font-size: 0.75rem;
+  color: var(--oc-muted);
+  margin-top: 16px;
+}
+[data-oc-surface="status"] #app {
+  padding: 6px 10px;
+}
+[data-oc-surface="status"] .quota-list {
+  display: block;
+}
+[data-oc-surface="status"] .quota {
+  padding: 9px;
+  margin-bottom: 8px;
+}
+[data-oc-surface="status"] .expanded {
+  display: none;
+}
+@media (min-width: 640px) {
+  .metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 320px) {
+  #app {
+    padding: 10px;
+  }
+  .window-heading {
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+}

@@ -1,0 +1,79 @@
+import type { Messages } from './en.ts';
+export const ja: Messages = {
+  title: 'Magpie 使用量',
+  quotas: 'サブスクリプションの上限',
+  refresh: '更新',
+  connecting: 'ローカルの Magpie を読み込み中…',
+  usage: '使用量の統計',
+  today: '今日',
+  week: '7 日間',
+  month: '30 日間',
+  all: '全期間',
+  loading: 'この期間の統計を読み込み中…',
+  updated: '更新時刻 {time}',
+  partial:
+    '一部のデータを更新できませんでした。メッセージを確認して更新してください。',
+  quotaFailed: '上限を取得できませんでした',
+  usageFailed: '使用量を取得できませんでした',
+  stale: '最後に取得できた結果を表示しています。',
+  noQuotas: '上限データがありません',
+  noQuotasBody:
+    'Magpie でアカウントを接続して更新してください。API サービスは残高を提供しない場合があります。',
+  lastUsed: '直近で使用',
+  unknown: '上限不明',
+  remaining: '残り {value}%',
+  used: '{name} の使用率',
+  resetDue: 'リセット時刻を過ぎました。更新を待っています',
+  resetIn: '{time}後にリセット',
+  readAt: '上限の取得時刻 {time}',
+  nonBlocking: 'この上限に達してもアカウントは引き続き利用できます',
+  noAccountQuota: 'Magpie はこのアカウントの上限を返していません',
+  calls: 'リクエスト',
+  callsDetail: 'この Magpie を使う全アプリ',
+  tokens: '合計トークン',
+  tokensDetail: 'キャッシュの読み書きを含む',
+  cost: '推定費用',
+  costDetail: 'API 価格での推定',
+  cache: 'キャッシュ読み取り',
+  cacheDetail: '合計トークンに含まれます',
+  breakdown: '入力 {input} · 出力 {output} · キャッシュ書き込み {write}',
+  apps: 'アプリ別',
+  models: 'モデル別 · 上位 10 件',
+  noRecords: 'この期間の記録はありません',
+  footnote:
+    '費用は Magpie が API 価格で推定した値で、サブスクリプションの請求額ではありません。このゲートウェイが記録した全呼び出しが対象です。',
+  unpriced: '{count} 件は価格が不明なため、費用に完全には含まれていません。',
+  grant:
+    '設定 → 拡張機能 → Magpie Usage でローカルサービスを許可してください。',
+  serviceFailed:
+    'ローカルサービスを起動できません。設定 → 拡張機能で再読み込みして更新してください。',
+  hostFailed:
+    'OpenChamber との接続に失敗しました（{code}）。再度更新してください。',
+  unknownError: '取得に失敗しました。再度更新してください。',
+  invalidData:
+    'データ形式が対応していません。拡張機能または Magpie を更新してください。',
+  settingsRead:
+    'Magpie のポート設定を読み取れません。settings.json のアクセス権を確認してください。',
+  settingsInvalid: 'Magpie settings.json のポート設定が無効です。',
+  unreachable:
+    'ローカルの Magpie に接続できません。Magpie を起動して更新してください。',
+  forbidden:
+    'Magpie が使用量へのアクセスを拒否しました。ゲートウェイの権限を確認してください。',
+  unsupported:
+    'この Magpie は使用量 API に対応していません。更新してください。',
+  upstream: 'Magpie がエラーを返しました。しばらくしてから更新してください。',
+  periodMismatch: 'Magpie が別の期間を返しました。Magpie を更新してください。',
+  method: '読み取りリクエストのみ対応しています。',
+  periodInvalid: '統計期間が無効です。',
+  storageFailed: '選択した期間を保存できませんでした。',
+  limitExceeded:
+    'Magpie の応答が大きすぎます。拡張機能を更新するか履歴を減らしてください。',
+  defaultPeriod: '既定の期間を使用します',
+  showAccounts: 'アカウント名を表示',
+  hideAccounts: 'アカウント名を隠す',
+  autoRefresh: '60 秒ごとに自動更新',
+  manualRefresh: 'エラーのため自動更新を停止中',
+  language: '言語',
+  followHost: 'OpenChamber に合わせる',
+  compactHint: 'トークンと費用の統計は Magpie 使用量を開いて確認できます。',
+};
