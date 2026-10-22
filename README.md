@@ -22,6 +22,16 @@ Git URL installs can receive updates through OpenChamber. Folder installs use th
 
 The official SDK currently has no registration hook for the built-in **Settings → Usage** provider registry. This extension provides its own panel, full page and Work Status section. VS Code and mobile do not load SDK extensions yet.
 
+### npm distribution
+
+The npm package is prepared as `openchamber-magpie-usage` starting with v0.2.1. Once that version is available on npm, install it in a dedicated local folder:
+
+```sh
+npm install --prefix ./openchamber-extensions --no-save openchamber-magpie-usage@0.2.1
+```
+
+In **Settings → Extensions → Add extension**, select the resulting `openchamber-extensions/node_modules/openchamber-magpie-usage` folder using its absolute path. OpenChamber does not accept npm names or npm `.tgz` archives directly. The package contains the same prebuilt panel and local service, with no runtime dependencies or install scripts. npm installs are folder installs: update with npm and reload the extension in OpenChamber.
+
 ## Features
 
 - Separate account quotas, balances and reset clocks. Marks the account used most recently; unknown limits stay unknown.
@@ -48,6 +58,7 @@ No model calls, telemetry, provider credentials, OpenCode configuration changes 
 bun install --frozen-lockfile
 bun run verify
 bun run package
+bun run verify:npm
 ```
 
 `panel/` and `service/` are committed build outputs required for Git URL installs. The ZIP and its SHA-256 checksum are written under `release/`. Packaging replaces the archive rather than retaining files from an earlier release.

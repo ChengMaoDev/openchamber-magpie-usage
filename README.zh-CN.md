@@ -17,6 +17,16 @@ Git URL 安装支持通过 OpenChamber 更新。文件夹安装修改源码后�
 
 当前官方 SDK 没有向内置 **设置 → 用量** 注册供应商的入口，因此本扩展提供独立侧栏、完整页面和工作状态区。VS Code、手机当前不加载此类扩展。
 
+### npm 分发
+
+从 v0.2.1 开始已准备 npm 包 `openchamber-magpie-usage`。该版本在 npm 上可用后，可以安装到单独的本地目录：
+
+```sh
+npm install --prefix ./openchamber-extensions --no-save openchamber-magpie-usage@0.2.1
+```
+
+然后在 **设置 → 扩展 → 添加扩展** 中选择生成的 `openchamber-extensions/node_modules/openchamber-magpie-usage` 文件夹，使用绝对路径。OpenChamber 不直接接受 npm 包名或 `.tgz`。npm 包包含相同的预构建面板和服务，无运行时依赖或安装脚本。它在 OpenChamber 中属于文件夹安装，更新时用 npm 更新后重新加载扩展。
+
 ## 功能和统计口径
 
 - 分账户显示额度、余额、重置时间和错误，标记最近使用账户，不将多个账户百分比相加。
@@ -43,6 +53,7 @@ Token 总量为输入、输出、缓存读取和缓存写入之和，不重复�
 bun install --frozen-lockfile
 bun run verify
 bun run package
+bun run verify:npm
 ```
 
 `panel/`、`service/` 是 Git URL 安装所需的已提交构建产物。ZIP 与 SHA-256 校验文件输出到 `release/`。本机真实接口验证可运行 `bun scripts/verify-live.ts` 和 `bun scripts/verify-bundle.ts`；浏览器回归仅用模拟数据，见英文 README。

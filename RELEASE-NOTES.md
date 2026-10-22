@@ -1,6 +1,10 @@
-# v0.2.0
+# v0.2.1
 
 Magpie quotas and usage inside OpenChamber, using its official extension SDK.
+
+This release adds npm distribution as `openchamber-magpie-usage@0.2.1`. The package ships the prebuilt panel, local service, icon and license notices, with no runtime dependencies or install hooks. CI validates the npm tarball contents and its OpenChamber manifest. Existing quota and usage behavior is unchanged from v0.2.0.
+
+Install with `npm install --prefix ./openchamber-extensions --no-save openchamber-magpie-usage@0.2.1`, then add the absolute path to `openchamber-extensions/node_modules/openchamber-magpie-usage` in OpenChamber Settings → Extensions. OpenChamber does not directly accept npm package names.
 
 - English, Simplified Chinese, Traditional Chinese and Japanese follow the OpenChamber language, including live changes, number formats and error messages. Other locales fall back to English.
 - Per-account subscription limits and reset times, with a compact Work Status section.
