@@ -167,7 +167,8 @@ h2 {
   margin-top: 16px;
 }
 [data-oc-surface="status"] .quota-list {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
 }
 [data-oc-surface="status"] .expanded {
   display: none;

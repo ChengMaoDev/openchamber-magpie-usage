@@ -1,11 +1,9 @@
-# v0.2.4
+# v0.2.5
 
-Restores clear visual boundaries in both display modes.
+Fixes adjacent quota cards touching in the Work Status section. Its standard layout now uses a single-column grid, preserving the existing 10-pixel card gap instead of overriding the container with block layout.
 
-- Standard quota cards now have a complete theme-colored outline and spacing below the update status, keeping their top and bottom edges visible even when surface colors are similar.
-- The compact quota list has top and bottom boundaries in addition to its account separators. Its usage summary also has a complete outline.
-- Display switches stay at the bottom; compact mode continues to show one update time at the top.
+Compact mode retains its separated account rows. Display switches stay at the bottom and quota fetching is unchanged.
 
-Validated with TypeScript, lint, 16 tests, official manifest validation and browser regression for borders in both modes and themes, mode switching, persistence, languages and narrow panels.
+Validated with TypeScript, lint, 16 tests, official manifest validation and browser regression that measures Work Status card spacing at 280/380/900 pixels and checks both themes and display modes.
 
 Update through OpenChamber Settings → Extensions or install the release ZIP. npm distribution remains disabled.

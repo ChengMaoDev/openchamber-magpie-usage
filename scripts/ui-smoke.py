@@ -269,6 +269,31 @@ def main():
         expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
         expect(panel.get_by_text("消耗统计", exact=True)).not_to_be_visible()
         assert page.evaluate("window.requests.every(r => r.path === '/quotas')")
+        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
+        expect(panel.locator(".quota")).to_have_count(2)
+        for width in [280, 380, 900]:
+            page.set_viewport_size({"width": width, "height": 1100})
+            assert panel.locator(".quota").evaluate_all(
+                "(cards) => cards[1].getBoundingClientRect().top - cards[0].getBoundingClientRect().bottom >= 10"
+            )
+        page.evaluate("window.setDark()")
+        expect(panel.locator("html")).to_have_attribute("data-oc-theme", "dark")
+        assert panel.locator(".quota").evaluate_all(
+            "(cards) => cards[1].getBoundingClientRect().top - cards[0].getBoundingClientRect().bottom >= 10"
+        )
+        page.set_viewport_size({"width": 380, "height": 1100})
+        panel.locator("#app").screenshot(
+            path=str(output / "magpie-work-status-cards.png")
+        )
+        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
+        expect(panel.locator(".compact-account")).to_have_count(2)
+        assert (
+            panel.locator(".compact-account")
+            .nth(1)
+            .evaluate(
+                '(el) => getComputedStyle(el).borderTopWidth === "1px" && parseFloat(getComputedStyle(el).paddingTop) >= 10'
+            )
+        )
         assert not errors, errors
         print(
             json.dumps(
@@ -278,6 +303,7 @@ def main():
                     "failure_recovery": "pass",
                     "responsive_widths": [280, 380, 900],
                     "status_section": "pass",
+                    "status_card_spacing": "pass",
                     "live_locales": [
                         "en-US",
                         "zh-CN",

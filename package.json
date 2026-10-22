@@ -1,6 +1,6 @@
 {
   "name": "openchamber-magpie-usage",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Community OpenChamber extension for local Magpie quotas, tokens and estimated costs",
   "license": "MIT",
   "author": "ChengMaoDev",
