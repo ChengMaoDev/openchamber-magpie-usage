@@ -31,7 +31,7 @@ This is an **OpenChamber extension**. Install it through **Settings → Extensio
 - Usage by app and top 10 models. Statistics include all calls recorded by the connected Magpie gateway, not just the active session.
 - English, 简体中文, 繁體中文 and 日本語 automatically follow OpenChamber, including live language changes. Other languages fall back to English. Provider-supplied labels and errors stay as Magpie returned them; the rail entry uses the stable name **Magpie Usage**.
 - Account names hidden by default, with an explicit switch to reveal them. This is a display preference, not an access-control boundary; provider-supplied names/errors can still identify an account.
-- A persistent **Compact mode** switch reduces card padding, spacing and metric helper text. Quotas, reset clocks, cost estimates and error warnings remain visible. It changes layout without fetching data. The Work Status section defaults to compact density until you choose a preference.
+- **Compact mode** uses a separate interface: account rows, a three-column usage summary, and expandable token/app/model details. Both display switches live at the bottom. Compact mode shows one update time at the top; per-account read times appear only in the standard view. Reset clocks, estimated-cost labels, missing-price warnings and errors stay visible. Switching layouts makes no data requests and remembers your choice.
 - Cached quota polling every 60 seconds while visible. Opening or clicking Refresh requests current quotas; the last upstream read time is shown. After an error polling pauses until a successful manual refresh.
 - Fast period changes coalesce into one queued request. Stale responses never populate a different period; failures keep valid results with a warning.
 

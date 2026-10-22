@@ -6,6 +6,7 @@ import {
 } from '@openchamber/sdk/ui';
 import type { I18n } from '../i18n/index.ts';
 import type { Quota } from '../shared/schema.ts';
+import { renderCompactQuotas } from './compact-quota.ts';
 import { element, remainingLabel, resetLabel } from './format.ts';
 
 type Disposable = { dispose(): void };
@@ -18,8 +19,17 @@ export function createQuotaView(root: HTMLElement) {
   };
   return {
     dispose: clear,
-    update(quotas: readonly Quota[], i18n: I18n, showAccounts: boolean) {
+    update(
+      quotas: readonly Quota[],
+      i18n: I18n,
+      showAccounts: boolean,
+      compactMode = false,
+    ) {
       clear();
+      if (compactMode) {
+        controls = renderCompactQuotas(root, quotas, i18n, showAccounts);
+        return;
+      }
       const { t } = i18n;
       if (quotas.length === 0) {
         controls.push(

@@ -8,6 +8,7 @@ import {
 import type { I18n } from '../i18n/index.ts';
 import { DataError } from '../shared/errors.ts';
 import type { Period, Quota, Usage } from '../shared/schema.ts';
+import { renderCompactUsage } from './compact-usage.ts';
 import { element } from './format.ts';
 import { createQuotaView } from './quota-view.ts';
 import { renderUsage } from './usage-view.ts';
@@ -68,10 +69,10 @@ export function createView(
     header,
     status,
     notices,
-    preferences,
     quotaRoot,
     section,
     hint,
+    preferences,
   );
   const quotas = createQuotaView(quotaRoot);
   const refresh = mountButton(refreshRoot, {
@@ -96,6 +97,7 @@ export function createView(
     onChange: actions.compactMode,
   });
   let banners: ReturnType<typeof mountBanner>[] = [];
+  const expandedUsage = new Set<string>();
   return {
     paint(state: PanelState) {
       const { i18n, period, busy } = state;
@@ -141,10 +143,17 @@ export function createView(
           mountBanner(notices, { tone: 'warning', title: t('storageFailed') }),
         );
       if (state.quotas !== null)
-        quotas.update(state.quotas, i18n, state.showAccounts);
-      if (state.usage?.period === period)
-        renderUsage(usageRoot, state.usage, i18n);
-      else
+        quotas.update(
+          state.quotas,
+          i18n,
+          state.showAccounts,
+          state.compactMode,
+        );
+      if (state.usage?.period === period) {
+        if (state.compactMode)
+          renderCompactUsage(usageRoot, state.usage, i18n, expandedUsage);
+        else renderUsage(usageRoot, state.usage, i18n);
+      } else
         usageRoot.replaceChildren(
           ...(busy ? [element('p', 'muted', t('loading'))] : []),
         );

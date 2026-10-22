@@ -12,6 +12,7 @@ for (const file of [
   'panel/index.html',
   'panel/main.js',
   'panel/style.css',
+  'panel/compact.css',
   'service/main.cjs',
   'icon.svg',
   'LICENSE',

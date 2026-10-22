@@ -103,7 +103,40 @@ def main():
         )
         assert page.evaluate("window.requests.length") == requests_before_density
         assert page.evaluate("window.stored.compactMode") is True
-        expect(panel.locator(".metric-detail").first).not_to_be_visible()
+        expect(panel.locator(".quota")).to_have_count(0)
+        expect(panel.locator(".compact-account")).to_have_count(2)
+        expect(panel.locator(".compact-total-value")).to_have_count(3)
+        assert panel.locator("#app").evaluate(
+            '(el) => el.lastElementChild.classList.contains("preferences")'
+        )
+        expect(panel.get_by_text("读取时间", exact=True)).to_have_count(0)
+        expect(panel.get_by_text("额度读取于", exact=False)).to_have_count(0)
+        expect(panel.locator(".status")).to_contain_text("已更新")
+        expect(panel.get_by_text("演示模型", exact=True)).not_to_be_visible()
+        token_details = panel.locator(".compact-disclosure").filter(
+            has=panel.locator("summary").get_by_text("Token 明细", exact=True)
+        )
+        token_details.locator("summary").click()
+        expect(panel.locator(".compact-token-list")).to_be_visible()
+        notes = panel.locator(".compact-disclosure").filter(
+            has=panel.locator("summary").get_by_text("统计说明", exact=True)
+        )
+        notes.locator("summary").click()
+        expect(notes.locator(".compact-context-note")).to_be_visible()
+        app_details = panel.locator(".compact-disclosure").filter(
+            has=panel.locator("summary").get_by_text("按应用", exact=True)
+        )
+        app_details.locator("summary").click()
+        expect(app_details.get_by_text("OpenCode", exact=True)).to_be_visible()
+        model_details = panel.locator(".compact-disclosure").filter(
+            has=panel.locator("summary").get_by_text("按模型 · 前 10 项", exact=True)
+        )
+        model_details.locator("summary").click()
+        expect(model_details.get_by_text("演示模型", exact=True)).to_be_visible()
+        panel.get_by_role("button", name="刷新", exact=True).click()
+        expect(panel.get_by_role("button", name="刷新", exact=True)).to_be_enabled()
+        expect(panel.get_by_text("演示模型", exact=True)).to_be_visible()
+        expect(panel.locator(".compact-token-list")).to_be_visible()
         page.reload()
         expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
         expect(panel.get_by_role("switch", name="紧凑模式", exact=True)).to_be_checked()
@@ -115,8 +148,18 @@ def main():
             )
         page.set_viewport_size({"width": 380, "height": 1100})
         panel.locator("#app").screenshot(path=str(output / "magpie-usage-compact.png"))
+        page.evaluate("window.fail=true")
+        panel.get_by_role("button", name="刷新", exact=True).click()
+        expect(panel.get_by_text("额度读取失败", exact=True)).to_be_visible()
+        expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
+        page.evaluate("window.fail=false")
+        panel.get_by_role("button", name="刷新", exact=True).click()
+        expect(panel.get_by_text("额度读取失败", exact=True)).to_have_count(0)
         panel.get_by_role("switch", name="紧凑模式", exact=True).click()
         expect(panel.locator("#app")).to_have_attribute("data-density", "comfortable")
+        assert panel.locator("#app").evaluate(
+            '(el) => el.lastElementChild.classList.contains("preferences")'
+        )
         expect(panel.locator(".metric-detail").first).to_be_visible()
         panel.get_by_role("tab", name="7 天", exact=True).click()
         expect(panel.locator(".metric-value").first).to_have_text("336")
@@ -195,6 +238,23 @@ def main():
         page.evaluate("window.setDark()")
         expect(panel.locator("html")).to_have_attribute("data-oc-theme", "dark")
         panel.locator("#app").screenshot(path=str(output / "magpie-usage-dark.png"))
+        panel.get_by_role("switch", name="Compact mode", exact=True).click()
+        expect(panel.locator(".compact-account")).to_have_count(2)
+        panel.locator("#app").screenshot(
+            path=str(output / "magpie-usage-compact-dark.png")
+        )
+        for locale, label in [
+            ("zh-Hant-HK", "精簡模式"),
+            ("ja-JP", "コンパクト表示"),
+            ("en-US", "Compact mode"),
+        ]:
+            page.evaluate("(locale) => window.setLocale(locale)", locale)
+            expect(panel.get_by_role("switch", name=label, exact=True)).to_be_checked()
+            for width in [280, 380, 900]:
+                page.set_viewport_size({"width": width, "height": 1100})
+                assert panel.locator("body").evaluate(
+                    "(el) => el.scrollWidth <= window.innerWidth"
+                )
         page.evaluate("sessionStorage.removeItem('preferences')")
         page.goto("http://127.0.0.1:58742/harness?surface=status")
         expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
@@ -219,6 +279,7 @@ def main():
                     "account_privacy": "pass",
                     "theme_switch": "pass",
                     "compact_mode_and_persistence": "pass",
+                    "compact_disclosures_and_refresh": "pass",
                     "console_errors": errors,
                     "screenshot": str(output / "magpie-usage-panel.png"),
                 },
