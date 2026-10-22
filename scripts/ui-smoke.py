@@ -10,7 +10,7 @@ HARNESS = r"""<!doctype html><html><head><meta charset="UTF-8"></head><body styl
 <script>
 window.requests = [];
 window.fail = false;
-window.stored = {};
+window.stored = JSON.parse(sessionStorage.getItem('preferences') || '{}');
 const tokens = {
   background:'#fdfcfa', elevated:'#f3f2f0', foreground:'#44443d', muted:'#696960',
   subtle:'#e9e8e5', border:'#d9d8d1', hover:'#eeede9', selection:'#f4e4d8',
@@ -50,7 +50,7 @@ window.addEventListener('message', async event => {
   if(m.type === 'hello') event.source.postMessage({...envelope,type:'ready',payload:window.context},'*');
   else if(m.type === 'storage') {
     if(m.payload.op === 'get') reply({storage:true,op:'get',found:m.payload.key in window.stored,value:window.stored[m.payload.key]});
-    if(m.payload.op === 'set') { window.stored[m.payload.key]=m.payload.value; reply({storage:true,op:'set'}); }
+    if(m.payload.op === 'set') { window.stored[m.payload.key]=m.payload.value; sessionStorage.setItem('preferences',JSON.stringify(window.stored)); reply({storage:true,op:'set'}); }
   } else if(m.type === 'service-request') {
     window.requests.push(m.payload);
     if(window.fail) return reply({status:502,body:JSON.stringify({code:'unreachable'})});
@@ -87,10 +87,37 @@ def main():
         expect(panel.get_by_text("额度未知", exact=True)).to_be_visible()
         expect(panel.get_by_text("演示模型", exact=True)).to_be_visible()
         expect(panel.get_by_text("demo@example.invalid", exact=True)).to_have_count(0)
-        panel.get_by_role("switch").click()
+        panel.get_by_role("switch", name="显示账户名", exact=True).click()
         expect(panel.get_by_text("demo@example.invalid", exact=True)).to_be_visible()
-        panel.get_by_role("switch").click()
+        panel.get_by_role("switch", name="显示账户名", exact=True).click()
         expect(panel.locator(".oc-sdk-progress-label")).not_to_be_visible()
+        normal_height = panel.locator("#app").evaluate(
+            "(el) => el.getBoundingClientRect().height"
+        )
+        requests_before_density = page.evaluate("window.requests.length")
+        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
+        expect(panel.locator("#app")).to_have_attribute("data-density", "compact")
+        assert (
+            panel.locator("#app").evaluate("(el) => el.getBoundingClientRect().height")
+            < normal_height
+        )
+        assert page.evaluate("window.requests.length") == requests_before_density
+        assert page.evaluate("window.stored.compactMode") is True
+        expect(panel.locator(".metric-detail").first).not_to_be_visible()
+        page.reload()
+        expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
+        expect(panel.get_by_role("switch", name="紧凑模式", exact=True)).to_be_checked()
+        expect(panel.locator("#app")).to_have_attribute("data-density", "compact")
+        for width in [280, 380, 900]:
+            page.set_viewport_size({"width": width, "height": 1100})
+            assert panel.locator("body").evaluate(
+                "(el) => el.scrollWidth <= window.innerWidth"
+            )
+        page.set_viewport_size({"width": 380, "height": 1100})
+        panel.locator("#app").screenshot(path=str(output / "magpie-usage-compact.png"))
+        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
+        expect(panel.locator("#app")).to_have_attribute("data-density", "comfortable")
+        expect(panel.locator(".metric-detail").first).to_be_visible()
         panel.get_by_role("tab", name="7 天", exact=True).click()
         expect(panel.locator(".metric-value").first).to_have_text("336")
         assert page.evaluate("window.stored.period") == "week"
@@ -136,6 +163,15 @@ def main():
             page.evaluate("(locale) => window.setLocale(locale)", locale)
             expect(panel.get_by_role("heading", name=title, exact=True)).to_be_visible()
             expect(panel.get_by_text(remaining, exact=True)).to_be_visible()
+            compact_label = {
+                "en-US": "Compact mode",
+                "zh-Hant-HK": "精簡模式",
+                "ja-JP": "コンパクト表示",
+                "fr-FR": "Compact mode",
+            }[locale]
+            expect(
+                panel.get_by_role("switch", name=compact_label, exact=True)
+            ).to_be_visible()
         assert page.evaluate("window.requests.length") == initial_requests
         page.evaluate("window.fail=true")
         panel.get_by_role("button", name="Refresh", exact=True).click()
@@ -159,6 +195,7 @@ def main():
         page.evaluate("window.setDark()")
         expect(panel.locator("html")).to_have_attribute("data-oc-theme", "dark")
         panel.locator("#app").screenshot(path=str(output / "magpie-usage-dark.png"))
+        page.evaluate("sessionStorage.removeItem('preferences')")
         page.goto("http://127.0.0.1:58742/harness?surface=status")
         expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
         expect(panel.get_by_text("消耗统计", exact=True)).not_to_be_visible()
@@ -181,6 +218,7 @@ def main():
                     ],
                     "account_privacy": "pass",
                     "theme_switch": "pass",
+                    "compact_mode_and_persistence": "pass",
                     "console_errors": errors,
                     "screenshot": str(output / "magpie-usage-panel.png"),
                 },

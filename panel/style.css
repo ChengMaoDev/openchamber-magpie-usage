@@ -75,8 +75,11 @@ h2 {
   min-width: 0;
   flex: 1;
 }
-.account-setting {
-  margin: 10px 0;
+.preferences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 10px 0 14px;
 }
 #app .quota-progress .oc-sdk-progress-label {
   display: none;
@@ -157,15 +160,8 @@ h2 {
   color: var(--oc-muted);
   margin-top: 16px;
 }
-[data-oc-surface="status"] #app {
-  padding: 6px 10px;
-}
 [data-oc-surface="status"] .quota-list {
   display: block;
-}
-[data-oc-surface="status"] .quota {
-  padding: 9px;
-  margin-bottom: 8px;
 }
 [data-oc-surface="status"] .expanded {
   display: none;
@@ -183,4 +179,48 @@ h2 {
     flex-wrap: wrap;
     gap: 3px;
   }
+}
+#app[data-density="compact"] {
+  padding: 8px 10px;
+}
+[data-density="compact"] .preferences {
+  margin: 6px 0 8px;
+  gap: 6px 12px;
+}
+[data-density="compact"] .quota-list {
+  gap: 6px;
+}
+[data-density="compact"] .quota {
+  padding: 8px 10px;
+}
+[data-density="compact"] .window {
+  margin-top: 8px;
+}
+[data-density="compact"] .window-meta {
+  margin-top: 2px;
+}
+[data-density="compact"] .section-heading {
+  margin: 14px 0 6px;
+}
+[data-density="compact"] .controls {
+  margin: 8px 0;
+}
+[data-density="compact"] .metrics {
+  gap: 8px 16px;
+  margin: 10px 0 6px;
+}
+[data-density="compact"] .metric-value {
+  font-size: 1.1rem;
+}
+[data-density="compact"] .metric-detail {
+  display: none;
+}
+[data-density="compact"] .rank {
+  margin-top: 8px;
+}
+[data-density="compact"] .rank-row {
+  padding: 3px 0;
+}
+[data-density="compact"] .footnote {
+  margin-top: 8px;
 }

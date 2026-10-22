@@ -65,11 +65,12 @@ export const ja: Messages = {
   periodMismatch: 'Magpie が別の期間を返しました。Magpie を更新してください。',
   method: '読み取りリクエストのみ対応しています。',
   periodInvalid: '統計期間が無効です。',
-  storageFailed: '選択した期間を保存できませんでした。',
+  storageFailed: '表示設定の読み込みまたは保存に失敗しました。',
   limitExceeded:
     'Magpie の応答が大きすぎます。拡張機能を更新するか履歴を減らしてください。',
   defaultPeriod: '既定の期間を使用します',
   showAccounts: 'アカウント名を表示',
+  compactMode: 'コンパクト表示',
   hideAccounts: 'アカウント名を隠す',
   autoRefresh: '60 秒ごとに自動更新',
   manualRefresh: 'エラーのため自動更新を停止中',

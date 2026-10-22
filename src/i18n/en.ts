@@ -60,11 +60,12 @@ export const en = {
     'Magpie returned a different period. Update Magpie before trying again.',
   method: 'Only read requests are supported.',
   periodInvalid: 'The statistics period is invalid.',
-  storageFailed: 'Could not save the selected period.',
+  storageFailed: 'Could not read or save display preferences.',
   limitExceeded:
     'The Magpie response is too large. Update the extension or reduce the history in Magpie.',
   defaultPeriod: 'Using the default period',
   showAccounts: 'Show account names',
+  compactMode: 'Compact mode',
   hideAccounts: 'Hide account names',
   autoRefresh: 'Auto-refresh every 60 seconds',
   manualRefresh: 'Automatic refresh is paused after an error',

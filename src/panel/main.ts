@@ -22,6 +22,7 @@ function mount(container: HTMLElement, context: HostReadyContext) {
     i18n: createI18n(context.locale),
     period: 'today',
     showAccounts: false,
+    compactMode: compact,
     busy: false,
     quotas: null,
     usage: null,
@@ -34,6 +35,7 @@ function mount(container: HTMLElement, context: HostReadyContext) {
   let initialized = false;
   let userSelectedPeriod = false;
   let userSelectedAccounts = false;
+  let userSelectedCompactMode = false;
   const loader = createLoader(host, compact);
   const paint = () => {
     if (disposed) return;
@@ -91,6 +93,12 @@ function mount(container: HTMLElement, context: HostReadyContext) {
       save('showAccounts', value);
       paint();
     },
+    compactMode: (value) => {
+      userSelectedCompactMode = true;
+      state = { ...state, compactMode: value };
+      save('compactMode', value);
+      paint();
+    },
   });
   paint();
   const timer = window.setInterval(() => {
@@ -107,6 +115,7 @@ function mount(container: HTMLElement, context: HostReadyContext) {
     const saved = await Promise.allSettled([
       host.storage.get('period'),
       host.storage.get('showAccounts'),
+      host.storage.get('compactMode'),
     ]);
     if (disposed) return;
     const period =
@@ -117,6 +126,10 @@ function mount(container: HTMLElement, context: HostReadyContext) {
       saved[1].status === 'fulfilled'
         ? z.boolean().safeParse(saved[1].value)
         : null;
+    const compactMode =
+      saved[2].status === 'fulfilled'
+        ? z.boolean().safeParse(saved[2].value)
+        : null;
     state = {
       ...state,
       period:
@@ -125,6 +138,10 @@ function mount(container: HTMLElement, context: HostReadyContext) {
         !userSelectedAccounts && accounts?.success
           ? accounts.data
           : state.showAccounts,
+      compactMode:
+        !userSelectedCompactMode && compactMode?.success
+          ? compactMode.data
+          : state.compactMode,
       storageError:
         saved.find((item) => item.status === 'rejected')?.reason ?? null,
     };

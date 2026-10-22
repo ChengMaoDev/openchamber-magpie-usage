@@ -1,18 +1,12 @@
-# v0.2.1
+# v0.2.2
 
-Magpie quotas and usage inside OpenChamber, using its official extension SDK.
+Adds a persistent **Compact mode** switch next to **Show account names** in the Magpie Usage panel.
 
-npm distribution has been discontinued. Install the OpenChamber extension from the Git URL or release ZIP in **Settings → Extensions**. Do not add the package name to OpenCode's Plugins page or `plugins` configuration: the two extension systems are different. Existing quota and usage behavior is unchanged from v0.2.0.
+- Reduces card padding, gaps, metric sizes and ranking row spacing; hides repetitive metric helper text.
+- Keeps quota percentages, progress bars, reset times, balances, cost caveats and errors visible. Usage statistics remain available in the panel and full page.
+- Remembers the selection across reloads. Switching density does not issue upstream requests. An explicit choice made while stored preferences are loading takes precedence.
+- Adds English, Simplified Chinese, Traditional Chinese and Japanese labels. The Work Status section defaults to compact density when no preference is saved.
 
-- English, Simplified Chinese, Traditional Chinese and Japanese follow the OpenChamber language, including live changes, number formats and error messages. Other locales fall back to English.
-- Per-account subscription limits and reset times, with a compact Work Status section.
-- Today, 7-day, 30-day and all-time token and estimated-cost statistics, grouped by app and model.
-- Serialized refreshes coalesce fast period changes and ignore obsolete usage results. Failed refreshes retain valid data with an explicit warning.
-- Numeric and ISO reset timestamps are supported. Unknown quotas stay unknown.
-- Account names are hidden by default and can be shown explicitly.
-- Magpie icon reused with attribution and the upstream MIT notice; this is an independent community extension.
-- Prebuilt ZIP and SHA-256 checksum; Git URL installs include committed bundles and need no build step.
+Validation: TypeScript and lint checks, 16 tests, official extension-manifest validation, and browser regression for persistence, live languages, themes, failures and widths of 280/380/900 pixels. No browser script errors observed.
 
-Requires OpenChamber 2.5.0+ and a local Magpie with the quotas and usage APIs. Validated against Magpie 0.1.1318 on macOS. Linux and Windows are not runtime-tested. The built-in OpenChamber Usage settings page is not extended by this SDK extension.
-
-Install from Settings → Extensions using the repository URL or the release ZIP. Approve the local-service permission, then open **Magpie Usage**.
+Install or update through **OpenChamber → Settings → Extensions** using the repository URL or release ZIP. Folder installs must reload after rebuilding. npm distribution remains disabled; this is an OpenChamber extension and must not be added to OpenCode's Plugins page.

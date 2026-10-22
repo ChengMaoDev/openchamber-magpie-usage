@@ -16,6 +16,7 @@ export type PanelState = {
   i18n: I18n;
   period: Period;
   showAccounts: boolean;
+  compactMode: boolean;
   busy: boolean;
   quotas: readonly Quota[] | null;
   usage: Usage | null;
@@ -41,6 +42,7 @@ export function createView(
     refresh(): void;
     period(value: string): void;
     accounts(value: boolean): void;
+    compactMode(value: boolean): void;
   },
 ) {
   container.replaceChildren();
@@ -52,6 +54,9 @@ export function createView(
   status.setAttribute('role', 'status');
   const notices = element('div', 'notice');
   const accountRoot = element('div', 'account-setting');
+  const compactRoot = element('div', 'compact-setting');
+  const preferences = element('div', 'preferences');
+  preferences.append(accountRoot, compactRoot);
   const quotaRoot = element('div', 'quota-list');
   const section = element('section', 'expanded');
   const usageTitle = element('h2', 'section-heading');
@@ -63,7 +68,7 @@ export function createView(
     header,
     status,
     notices,
-    accountRoot,
+    preferences,
     quotaRoot,
     section,
     hint,
@@ -85,6 +90,11 @@ export function createView(
     checked: false,
     onChange: actions.accounts,
   });
+  const compactMode = mountSwitch(compactRoot, {
+    label: '',
+    checked: compact,
+    onChange: actions.compactMode,
+  });
   let banners: ReturnType<typeof mountBanner>[] = [];
   return {
     paint(state: PanelState) {
@@ -92,6 +102,7 @@ export function createView(
       const { t } = i18n;
       document.documentElement.lang = i18n.locale;
       document.title = t('title');
+      container.dataset.density = state.compactMode ? 'compact' : 'comfortable';
       title.textContent = t(compact ? 'quotas' : 'title');
       usageTitle.textContent = t('usage');
       refresh.update({ label: t('refresh'), loading: busy });
@@ -105,6 +116,10 @@ export function createView(
       accounts.update({
         label: t('showAccounts'),
         checked: state.showAccounts,
+      });
+      compactMode.update({
+        label: t('compactMode'),
+        checked: state.compactMode,
       });
       for (const banner of banners) banner.dispose();
       banners = [];
@@ -151,6 +166,7 @@ export function createView(
       refresh.dispose();
       tabs.dispose();
       accounts.dispose();
+      compactMode.dispose();
       quotas.dispose();
       for (const banner of banners) banner.dispose();
     },
