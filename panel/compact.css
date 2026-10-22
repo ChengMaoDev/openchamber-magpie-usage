@@ -7,6 +7,9 @@
 }
 [data-density="compact"] .quota-list {
   display: block;
+  margin-top: 10px;
+  border-top: 1px solid var(--oc-border);
+  border-bottom: 1px solid var(--oc-border);
 }
 .compact-account {
   padding: 10px 0;
@@ -77,6 +80,7 @@
 [data-density="compact"] .expanded {
   margin-top: 12px;
   padding: 12px;
+  border: 1px solid var(--oc-border);
   border-radius: var(--oc-radius);
   background: var(--oc-muted-surface);
 }

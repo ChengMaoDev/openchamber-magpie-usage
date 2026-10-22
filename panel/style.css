@@ -64,8 +64,12 @@ h2 {
 .quota {
   min-width: 0;
   padding: 13px;
+  border: 1px solid var(--oc-border);
   border-radius: var(--oc-radius);
   background: var(--oc-muted-surface);
+}
+[data-density="comfortable"] .quota-list {
+  margin-top: 12px;
 }
 .quota-heading {
   align-items: flex-start;

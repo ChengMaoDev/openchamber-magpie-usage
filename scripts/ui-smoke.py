@@ -86,6 +86,9 @@ def main():
         expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
         expect(panel.get_by_text("额度未知", exact=True)).to_be_visible()
         expect(panel.get_by_text("演示模型", exact=True)).to_be_visible()
+        assert panel.locator(".quota").evaluate_all(
+            '(cards) => cards.every(card => { const s = getComputedStyle(card); return [s.borderTopWidth, s.borderRightWidth, s.borderBottomWidth, s.borderLeftWidth].every(width => width === "1px"); })'
+        )
         expect(panel.get_by_text("demo@example.invalid", exact=True)).to_have_count(0)
         panel.get_by_role("switch", name="显示账户名", exact=True).click()
         expect(panel.get_by_text("demo@example.invalid", exact=True)).to_be_visible()
@@ -105,6 +108,9 @@ def main():
         assert page.evaluate("window.stored.compactMode") is True
         expect(panel.locator(".quota")).to_have_count(0)
         expect(panel.locator(".compact-account")).to_have_count(2)
+        assert panel.locator(".quota-list").evaluate(
+            '(el) => { const s = getComputedStyle(el); return s.borderTopWidth === "1px" && s.borderBottomWidth === "1px"; }'
+        )
         expect(panel.locator(".compact-total-value")).to_have_count(3)
         assert panel.locator("#app").evaluate(
             '(el) => el.lastElementChild.classList.contains("preferences")'
@@ -237,6 +243,9 @@ def main():
         panel.locator("#app").screenshot(path=str(output / "magpie-usage-en.png"))
         page.evaluate("window.setDark()")
         expect(panel.locator("html")).to_have_attribute("data-oc-theme", "dark")
+        assert panel.locator(".quota").evaluate_all(
+            '(cards) => cards.length === 2 && cards.every(card => getComputedStyle(card).borderTopWidth === "1px" && getComputedStyle(card).borderBottomWidth === "1px")'
+        )
         panel.locator("#app").screenshot(path=str(output / "magpie-usage-dark.png"))
         panel.get_by_role("switch", name="Compact mode", exact=True).click()
         expect(panel.locator(".compact-account")).to_have_count(2)
