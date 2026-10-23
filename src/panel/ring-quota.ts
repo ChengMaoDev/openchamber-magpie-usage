@@ -2,9 +2,12 @@ import { mountEmpty } from '@openchamber/sdk/ui';
 import type { I18n } from '../i18n/index.ts';
 import type { Quota, QuotaWindow } from '../shared/schema.ts';
 import type { QuotaDisplay } from './display-mode.ts';
-import { element, resetLabel } from './format.ts';
+import { element } from './format.ts';
 import { quotaAccounts } from './quota-accounts.ts';
 import { quotaTone, quotaValues } from './quota-values.ts';
+import { ringDescription } from './ring-description.ts';
+import { ringGroups } from './ring-groups.ts';
+import { createRingTooltip } from './ring-tooltip.ts';
 
 function ring(value: number | undefined, used: number | undefined) {
   const wrap = element('span', 'quota-ring');
@@ -39,6 +42,7 @@ function windowSummary(
   quota: Quota,
   i18n: I18n,
   display: QuotaDisplay,
+  groupLabel?: string,
 ) {
   const { t } = i18n;
   const values = quotaValues(window);
@@ -46,7 +50,8 @@ function windowSummary(
   const value = values[display];
   const circle = ring(value, values.used);
   const info = element('span', 'ring-window-info');
-  const name = [window?.name, window?.model].filter(Boolean).join(' · ');
+  const name =
+    groupLabel ?? [window?.name, window?.model].filter(Boolean).join(' · ');
   if (name) info.append(element('span', 'ring-window', name));
   if (value !== undefined) {
     circle.append(element('strong', 'ring-value', `${i18n.percent(value)}%`));
@@ -64,7 +69,6 @@ export function renderRingQuotas(
   quotas: readonly Quota[],
   i18n: I18n,
   showAccounts: boolean,
-  expanded: Set<string>,
   display: QuotaDisplay,
 ) {
   const { t } = i18n;
@@ -72,21 +76,17 @@ export function renderRingQuotas(
     return [
       mountEmpty(root, { title: t('noQuotas'), body: t('noQuotasBody') }),
     ];
-  for (const { quota, key, name } of quotaAccounts(quotas)) {
-    const windows: readonly (QuotaWindow | undefined)[] = quota.windows.length
-      ? quota.windows
-      : [undefined];
-    for (const [index, window] of windows.entries()) {
-      const windowKey = JSON.stringify([
-        key,
-        window?.name,
-        window?.model,
-        index,
-      ]);
-      const details = element('details', 'ring-account');
-      details.open = expanded.has(windowKey);
-      const summary = element('summary', 'ring-summary');
-      summary.dataset.focusId = `ring-${quotas.indexOf(quota)}-${index}`;
+  const tooltip = createRingTooltip();
+  for (const { quota, name } of quotaAccounts(quotas)) {
+    for (const [index, group] of ringGroups(quota.windows, display).entries()) {
+      const { window, grouped, unknownCount } = group;
+      const account = element('article', 'ring-account');
+      account.tabIndex = 0;
+      account.dataset.focusId = `ring-${quotas.indexOf(quota)}-${index}`;
+      const summary = element('div', 'ring-summary');
+      const groupLabel = grouped
+        ? t(display === 'remaining' ? 'lowestRemaining' : 'highestUsed')
+        : undefined;
       const heading = element('span', 'ring-heading');
       if (quota.last) {
         const dot = element('span', 'active-account');
@@ -102,56 +102,45 @@ export function renderRingQuotas(
         error.setAttribute('aria-label', quota.error);
         heading.append(error);
       }
-      summary.append(windowSummary(window, quota, i18n, display), heading);
-      const title = [
-        name,
-        showAccounts ? quota.user : '',
-        window?.name,
-        window?.model,
-        quota.error,
-      ]
-        .filter(Boolean)
-        .join(' · ');
-      summary.title = title;
-      const body = element('div', 'ring-detail');
-      body.append(element('strong', '', name));
-      if (showAccounts && quota.user)
-        body.append(element('p', 'muted', quota.user));
-      for (const window of quota.windows) {
-        const values = quotaValues(window);
-        const resetAt =
-          window.resetsAt ??
-          (window.resetSecs !== undefined && quota.readAt
-            ? new Date(
-                Date.parse(quota.readAt) + window.resetSecs * 1000,
-              ).toISOString()
-            : undefined);
-        for (const text of [
-          [window.name, window.model].filter(Boolean).join(' · '),
-          values[display] === undefined
-            ? t('unknown')
-            : t(display === 'used' ? 'usedPercent' : 'remaining', {
-                value: i18n.percent(values[display]),
-              }),
-          window.display,
-          resetLabel(resetAt, Date.now(), i18n),
-          window.aside ? t('nonBlocking') : null,
-        ])
-          if (text) body.append(element('p', 'muted', text));
+      summary.append(
+        windowSummary(window, quota, i18n, display, groupLabel),
+        heading,
+      );
+      if (grouped) {
+        account.dataset.grouped = 'true';
+        const count = element(
+          'span',
+          'ring-group-count',
+          t('quotaCount', { count: i18n.number(quota.windows.length) }),
+        );
+        summary.append(count);
+        if (unknownCount > 0)
+          summary.append(
+            element(
+              'span',
+              'ring-group-unknown',
+              t('unknownQuotaCount', { count: i18n.number(unknownCount) }),
+            ),
+          );
       }
-      for (const text of [quota.plan, quota.balance])
-        if (text) body.append(element('p', 'muted', text));
-      if (!quota.windows.length && !quota.balance && !quota.error)
-        body.append(element('p', 'muted', t('noAccountQuota')));
-      if (quota.error) body.append(element('p', 'error', quota.error));
-      details.append(summary, body);
-      details.addEventListener('toggle', () => {
-        if (!details.isConnected) return;
-        if (details.open) expanded.add(windowKey);
-        else expanded.delete(windowKey);
-      });
-      root.append(details);
+      account.setAttribute(
+        'aria-label',
+        [name, groupLabel, summary.textContent].filter(Boolean).join(' · '),
+      );
+      tooltip.attach(
+        account,
+        ringDescription(
+          quota,
+          name,
+          grouped ? quota.windows : window ? [window] : [],
+          i18n,
+          showAccounts,
+          display,
+        ),
+      );
+      account.append(summary);
+      root.append(account);
     }
   }
-  return [];
+  return [tooltip];
 }

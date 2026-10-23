@@ -14,12 +14,8 @@
   align-items: center;
   gap: 4px;
   padding: 2px;
-  list-style: none;
-  cursor: pointer;
+  cursor: default;
   border-radius: var(--oc-radius);
-}
-.ring-summary::-webkit-details-marker {
-  display: none;
 }
 .ring-summary:hover {
   background: var(--oc-muted-surface);
@@ -128,20 +124,36 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ring-account[open] {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: 8px;
+.ring-group-count {
+  color: var(--oc-muted);
+  font-size: 0.65rem;
 }
-.ring-detail {
-  padding: 8px;
-  border-left: 1px solid var(--oc-border);
+.ring-group-unknown {
+  color: var(--oc-warning-text);
+  font-size: 0.6rem;
+  text-align: center;
+}
+.ring-account:focus-visible {
+  outline: 2px solid var(--oc-focus);
+  outline-offset: 2px;
+  border-radius: var(--oc-radius);
+}
+.ring-tooltip {
+  position: fixed;
+  z-index: 10;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  padding: 8px 10px;
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  background: var(--oc-muted-surface);
+  color: var(--oc-fg);
   font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-line;
   overflow-wrap: anywhere;
-}
-.ring-detail p {
-  margin-top: 4px;
+  overflow-y: auto;
 }
 #app .quota-list.is-empty {
   display: block;

@@ -14,6 +14,13 @@ if mode_spec is None or mode_spec.loader is None:
     raise RuntimeError("Cannot load display mode browser checks")
 mode_checks = importlib.util.module_from_spec(mode_spec)
 mode_spec.loader.exec_module(mode_checks)
+group_spec = importlib.util.spec_from_file_location(
+    "ui_grouped", Path(__file__).with_name("ui-grouped.py")
+)
+if group_spec is None or group_spec.loader is None:
+    raise RuntimeError("Cannot load grouped quota browser checks")
+group_checks = importlib.util.module_from_spec(group_spec)
+group_spec.loader.exec_module(group_checks)
 
 HARNESS = r"""<!doctype html><html><head><meta charset="UTF-8"></head><body style="margin:0">
 <script>
@@ -61,6 +68,21 @@ if(new URLSearchParams(location.search).has('many')) quotas.data = [
   {provider:'balance',name:'Balance',balance:'$12.34',windows:[]},
 ];
 if(new URLSearchParams(location.search).has('empty')) quotas.data = [];
+if(new URLSearchParams(location.search).has('grouped')) quotas.data = [
+  quotas.data[0],
+  {provider:'codex',name:'Codex',user:'second@example.invalid',windows:[{name:'30 days',remaining:83}]},
+  {provider:'antigravity',name:'Antigravity',user:'test@example.invalid',windows:[
+    {name:'Gemini · 7 days',remaining:94.8,resetsAt:new Date(Date.now()+40*3600000).toISOString()},
+    {name:'Gemini · 5 hours',remaining:99.5},
+    {name:'Claude & GPT · 7 days',remaining:100},
+    {name:'Claude & GPT · 5 hours',remaining:100},
+  ]},
+  {provider:'ai-studio',name:'Google AI Studio',windows:[
+    {name:'代理出口',used:0,remaining:100},
+    {name:'管理页',used:0,remaining:100},
+  ]},
+];
+if(new URLSearchParams(location.search).has('partial')) quotas.data[2].windows[3] = {name:'Claude & GPT · 5 hours'};
 window.addEventListener('message', async event => {
   const m = event.data;
   if(m.channel !== envelope.channel) return;
@@ -299,6 +321,7 @@ def main():
             )
         )
         mode_checks.check_ring_modes(page, panel, output)
+        group_checks.check_grouped_quotas(page, panel, output)
         assert not errors, errors
         print(
             json.dumps(
@@ -321,6 +344,7 @@ def main():
                     "compact_mode_and_persistence": "pass",
                     "compact_disclosures_and_refresh": "pass",
                     "remaining_used_and_layout_continuity": "pass",
+                    "grouped_multi_window_quotas": "pass",
                     "console_errors": errors,
                     "screenshot": str(output / "magpie-usage-panel.png"),
                 },

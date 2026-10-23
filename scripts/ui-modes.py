@@ -41,15 +41,25 @@ def check_ring_modes(page: Page, panel: FrameLocator, output: Path):
         '(el) => {const n=el.querySelector(".ring-name-text").getBoundingClientRect();const u=el.querySelector(".account-inline").getBoundingClientRect();return Math.abs(n.top-u.top)<5;}'
     )
     panel.get_by_role("switch", name="显示账户名", exact=True).click()
-    panel.locator(".ring-summary").first.focus()
+    panel.locator(".ring-account").first.focus()
     page.keyboard.press("Enter")
-    expect(panel.locator(".ring-detail").first).to_be_visible()
-    expect(panel.locator(".ring-detail").first).to_contain_text("后重置")
+    expect(panel.get_by_role("tooltip")).to_be_visible()
+    expect(panel.get_by_role("tooltip")).to_contain_text("后重置")
+    expect(panel.locator(".ring-account details, .ring-detail")).to_have_count(0)
+    page.keyboard.press("Escape")
+    expect(panel.get_by_role("tooltip")).not_to_be_visible()
     panel.get_by_role("button", name="刷新", exact=True).click()
     expect(panel.get_by_role("button", name="刷新", exact=True)).to_be_enabled()
-    expect(panel.locator(".ring-detail").first).to_be_visible()
-    panel.locator(".ring-summary").first.click()
-    expect(panel.locator(".ring-detail").first).not_to_be_visible()
+    before_click = panel.locator(".quota-list").evaluate(
+        "(el) => el.getBoundingClientRect().height"
+    )
+    panel.locator(".ring-account").first.click()
+    assert (
+        panel.locator(".quota-list").evaluate(
+            "(el) => el.getBoundingClientRect().height"
+        )
+        == before_click
+    )
     page.reload()
     expect(panel.locator(".quota-list")).to_have_attribute("data-density", "compact")
     expect(panel.locator(".ring-value")).to_have_text("63.6%")
@@ -143,12 +153,12 @@ def check_layouts(page: Page, panel: FrameLocator, output: Path):
 
 def check_many_accounts(page: Page, panel: FrameLocator, output: Path):
     page.goto("http://127.0.0.1:58742/harness?surface=status&many")
-    expect(panel.locator(".quota-ring")).to_have_count(7)
-    expect(panel.locator(".ring-account")).to_have_count(7)
+    expect(panel.locator(".quota-ring")).to_have_count(6)
+    expect(panel.locator(".ring-account")).to_have_count(6)
     expect(panel.locator(".ring-name-text").first).to_have_text("Codex 1")
-    expect(panel.locator(".ring-name-text").nth(2)).to_have_text("Codex 2")
-    expect(panel.locator(".ring-value").nth(1)).to_have_text("8.0%")
-    expect(panel.locator(".quota-ring").nth(1)).to_have_attribute("data-tone", "error")
+    expect(panel.locator(".ring-name-text").nth(1)).to_have_text("Codex 2")
+    expect(panel.locator(".ring-value").first).to_have_text("8.0%")
+    expect(panel.locator(".quota-ring").first).to_have_attribute("data-tone", "error")
     assert panel.locator('.quota-ring[data-empty="true"] .ring-fill').evaluate_all(
         '(els) => els.every(el => getComputedStyle(el).display === "none")'
     )
@@ -160,7 +170,7 @@ def check_many_accounts(page: Page, panel: FrameLocator, output: Path):
             ("紧凑", ".ring-account"),
         ]:
             panel.get_by_role("tab", name=mode, exact=True).click()
-            expect(panel.locator(selector)).to_have_count(7 if mode == "紧凑" else 6)
+            expect(panel.locator(selector)).to_have_count(6)
             assert panel.locator("body").evaluate(
                 "(el) => el.scrollWidth <= innerWidth"
             )
@@ -175,11 +185,14 @@ def check_many_accounts(page: Page, panel: FrameLocator, output: Path):
         panel.get_by_role("tab", name=mode, exact=True).click()
         panel.locator(".quota-list").evaluate("(el) => el.scrollTop=0")
         panel.locator("#app").screenshot(path=str(output / f"magpie-many-{name}.png"))
-    panel.locator(".ring-summary").first.click()
-    expect(panel.locator(".ring-detail").first).to_be_visible()
+    before_click = panel.locator(".quota-list").evaluate("(el) => el.scrollHeight")
+    panel.locator(".ring-account").first.click()
+    assert (
+        panel.locator(".quota-list").evaluate("(el) => el.scrollHeight") == before_click
+    )
     panel.get_by_role("tab", name="中等", exact=True).click()
     panel.get_by_role("tab", name="紧凑", exact=True).click()
-    expect(panel.locator(".ring-detail").first).to_be_visible()
+    expect(panel.locator(".ring-detail, details.ring-account")).to_have_count(0)
     page.goto("http://127.0.0.1:58742/harness?surface=status&empty")
     for mode in ["宽松", "中等", "紧凑"]:
         panel.get_by_role("tab", name=mode, exact=True).click()
@@ -192,7 +205,7 @@ def check_many_accounts(page: Page, panel: FrameLocator, output: Path):
 def check_localized_controls(page: Page, panel: FrameLocator, output: Path):
     page.wait_for_function('window.stored.displayMode === "compact"')
     page.goto("http://127.0.0.1:58742/harness?surface=status&many")
-    expect(panel.locator(".quota-ring")).to_have_count(7)
+    expect(panel.locator(".quota-ring")).to_have_count(6)
     for locale, modes, remaining, used in [
         ("en-US", ["Relaxed", "Medium", "Compact"], "Remaining", "Used"),
         ("zh-CN", ["宽松", "中等", "紧凑"], "剩余", "已用"),
@@ -208,9 +221,17 @@ def check_localized_controls(page: Page, panel: FrameLocator, output: Path):
                 expect(
                     panel.get_by_role("button", name=used, exact=True)
                 ).to_be_focused()
-                expect(panel.get_by_text("36.4%", exact=True)).to_be_visible()
+                expect(
+                    panel.get_by_text(
+                        "92.0%" if mode == modes[2] else "36.4%", exact=True
+                    )
+                ).to_be_visible()
                 panel.get_by_role("button", name=used, exact=True).click()
-                expect(panel.get_by_text("63.6%", exact=True)).to_be_visible()
+                expect(
+                    panel.get_by_text(
+                        "8.0%" if mode == modes[2] else "63.6%", exact=True
+                    )
+                ).to_be_visible()
                 assert panel.locator("body").evaluate(
                     "(el) => el.scrollWidth <= innerWidth"
                 )

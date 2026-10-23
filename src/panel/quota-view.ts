@@ -16,7 +16,6 @@ import { renderRingQuotas } from './ring-quota.ts';
 type Disposable = { dispose(): void };
 export function createQuotaView(root: HTMLElement) {
   let controls: Disposable[] = [];
-  const expandedRings = new Set<string>();
   const clear = () => {
     for (const control of controls) control.dispose();
     controls = [];
@@ -38,7 +37,6 @@ export function createQuotaView(root: HTMLElement) {
           quotas,
           i18n,
           showAccounts,
-          expandedRings,
           quotaDisplay,
         );
         return;
