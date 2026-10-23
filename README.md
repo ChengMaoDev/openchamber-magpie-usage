@@ -16,11 +16,11 @@ Requires **OpenChamber 2.5.0+** on web or desktop, and Magpie running **on the O
 1. Open **Settings → Extensions → Add extension**.
 2. Paste `https://github.com/ChengMaoDev/openchamber-magpie-usage` or select the ZIP from [Releases](https://github.com/ChengMaoDev/openchamber-magpie-usage/releases).
 3. Review and approve **Run a local service**.
-4. Open **Magpie Usage** from the right rail. A full page is available from Extension pages; enable **Magpie** in the Work Status section list for a compact quota view.
+4. Open **Magpie Usage** from the right rail, or enable **Magpie** in the Work Status section list. The extension does not add a page in the main workspace.
 
 Git URL installs can receive updates through OpenChamber. Folder installs use the folder directly; rebuild and reload after changes. ZIP installs must be updated manually. The package includes built JavaScript; installation requires no Bun, system Node or dependency download.
 
-The official SDK currently has no registration hook for the built-in **Settings → Usage** provider registry. This extension provides its own panel, full page and Work Status section. VS Code and mobile do not load SDK extensions yet.
+The official SDK currently has no registration hook for the built-in **Settings → Usage** provider registry. This extension provides a sidebar panel and Work Status section. VS Code and mobile do not load SDK extensions yet.
 
 This is an **OpenChamber extension**. Install it through **Settings → Extensions**, using the Git URL or ZIP above. Do not add its name to **OpenCode → Plugins** or the `plugins` configuration: that loader cannot load this extension and reports `Plugin entrypoint not found`. npm distribution has been discontinued.
 
@@ -31,7 +31,7 @@ This is an **OpenChamber extension**. Install it through **Settings → Extensio
 - Usage by app and top 10 models. Statistics include all calls recorded by the connected Magpie gateway, not just the active session.
 - English, 简体中文, 繁體中文 and 日本語 automatically follow OpenChamber, including live language changes. Other languages fall back to English. Provider-supplied labels and errors stay as Magpie returned them; the rail entry uses the stable name **Magpie Usage**.
 - Account names hidden by default, with an explicit switch to reveal them. This is a display preference, not an access-control boundary; provider-supplied names/errors can still identify an account.
-- **Compact mode** uses a separate interface: account rows, a three-column usage summary, and expandable token/app/model details. Both display switches live at the bottom. Compact mode shows one update time at the top; per-account read times appear only in the standard view. Reset clocks, estimated-cost labels, missing-price warnings and errors stay visible. Switching layouts makes no data requests and remembers your choice.
+- Bottom tags choose **Relaxed**, **Medium** or **Compact** quota displays: cards, account rows or small rings. A button beside Refresh switches all quota values and progress between remaining and used, remembering the choice without fetching data. Warning colors track exhaustion in either view. Account names stay inline when enabled. Statistics retain their full layout in the sidebar; Work Status shows quotas with a scrollable account region and visible bottom controls.
 - Cached quota polling every 60 seconds while visible. Opening or clicking Refresh requests current quotas; the last upstream read time is shown. After an error polling pauses until a successful manual refresh.
 - Fast period changes coalesce into one queued request. Stale responses never populate a different period; failures keep valid results with a warning.
 
@@ -62,7 +62,7 @@ bun scripts/verify-live.ts
 bun scripts/verify-bundle.ts
 ```
 
-Browser regression uses Python Playwright via `uv` and installed Chrome. Serve this folder on loopback port `58742`, then run `uv run --with playwright python scripts/ui-smoke.py`. It uses synthetic data and the real SDK iframe message protocol; no user data is captured in its screenshots.
+Browser regression uses Python Playwright via `uv` and its Chromium browser (`uv run --with playwright playwright install chromium`). Serve this folder on loopback port `58742`, then run `uv run --with playwright python scripts/ui-smoke.py`. It uses synthetic data and the real SDK iframe message protocol; no user data is captured in its screenshots.
 
 ## License and icon
 

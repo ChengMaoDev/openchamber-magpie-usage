@@ -1,10 +1,19 @@
 """Exercise the bundled panel through the real SDK postMessage protocol."""
 
+import importlib.util
 import json
 import tempfile
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
+
+mode_spec = importlib.util.spec_from_file_location(
+    "ui_modes", Path(__file__).with_name("ui-modes.py")
+)
+if mode_spec is None or mode_spec.loader is None:
+    raise RuntimeError("Cannot load display mode browser checks")
+mode_checks = importlib.util.module_from_spec(mode_spec)
+mode_spec.loader.exec_module(mode_checks)
 
 HARNESS = r"""<!doctype html><html><head><meta charset="UTF-8"></head><body style="margin:0">
 <script>
@@ -33,7 +42,7 @@ window.setLocale = locale => {
 };
 window.setDark = () => {
   window.context.theme.mode='dark';
-  Object.assign(window.context.theme.tokens, {background:'#1c1c1a',foreground:'#eeeee9',muted:'#aaa99f',mutedSurface:'#282825',primary:'#e6a16b',primaryText:'#e6a16b'});
+  Object.assign(window.context.theme.tokens, {background:'#1c1c1a',foreground:'#eeeee9',muted:'#aaa99f',mutedSurface:'#282825',border:'#45453e',hover:'#34342f',elevated:'#282825',elevatedForeground:'#eeeee9',primary:'#e6a16b',primaryText:'#e6a16b',primaryForeground:'#1c1c1a',selection:'#46372b',selectionForeground:'#eeeee9'});
   document.querySelector('iframe').contentWindow.postMessage({...envelope,type:'ready',payload:window.context},'*');
 };
 const counters = {calls:48,input:24000,output:6400,cache_read:92000,cache_write:4800,cost:1.23,unpriced:2};
@@ -43,6 +52,15 @@ const quotas = {data:[
    resetsAt:new Date(Date.now()+40*3600000).toISOString()}]},
   {provider:'custom',name:'自定义服务',windows:[{name:'Credits',display:'余额待供应商提供'}]}
 ]};
+if(new URLSearchParams(location.search).has('many')) quotas.data = [
+  {...quotas.data[0], windows:[...quotas.data[0].windows, {name:'5 hours',remaining:8}]},
+  {provider:'codex',name:'Codex',user:'second@example.invalid',windows:[{name:'7 days',used:100}]},
+  {provider:'gateway',name:'很长的自定义网关名称用于检查窄面板',windows:[{name:'Weekly quota with a long model name',used:0}]},
+  {provider:'unknown',name:'Unknown',windows:[]},
+  {provider:'error',name:'Gateway',error:'无法获取额度，请在 Magpie 中重新连接账户',windows:[]},
+  {provider:'balance',name:'Balance',balance:'$12.34',windows:[]},
+];
+if(new URLSearchParams(location.search).has('empty')) quotas.data = [];
 window.addEventListener('message', async event => {
   const m = event.data;
   if(m.channel !== envelope.channel) return;
@@ -72,7 +90,7 @@ def main():
     output = Path(tempfile.gettempdir()) / "opencode"
     output.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True, channel="chrome")
+        browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 380, "height": 1100})
         errors: list[str] = []
         page.on("pageerror", lambda error: errors.append(str(error)))
@@ -83,7 +101,7 @@ def main():
         page.goto("http://127.0.0.1:58742/harness")
         page.wait_for_load_state("networkidle")
         panel = page.frame_locator("iframe")
-        expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
+        expect(panel.get_by_text("63.6%", exact=True)).to_be_visible()
         expect(panel.get_by_text("额度未知", exact=True)).to_be_visible()
         expect(panel.get_by_text("演示模型", exact=True)).to_be_visible()
         assert panel.locator(".quota").evaluate_all(
@@ -98,55 +116,37 @@ def main():
             "(el) => el.getBoundingClientRect().height"
         )
         requests_before_density = page.evaluate("window.requests.length")
-        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
-        expect(panel.locator("#app")).to_have_attribute("data-density", "compact")
+        panel.get_by_role("tab", name="中等", exact=True).click()
+        expect(panel.locator(".quota-list")).to_have_attribute("data-density", "medium")
         assert (
             panel.locator("#app").evaluate("(el) => el.getBoundingClientRect().height")
             < normal_height
         )
         assert page.evaluate("window.requests.length") == requests_before_density
-        assert page.evaluate("window.stored.compactMode") is True
+        assert page.evaluate("window.stored.displayMode") == "medium"
         expect(panel.locator(".quota")).to_have_count(0)
         expect(panel.locator(".compact-account")).to_have_count(2)
         assert panel.locator(".quota-list").evaluate(
             '(el) => { const s = getComputedStyle(el); return s.borderTopWidth === "1px" && s.borderBottomWidth === "1px"; }'
         )
-        expect(panel.locator(".compact-total-value")).to_have_count(3)
+        expect(panel.locator(".metric-value")).to_have_count(4)
         assert panel.locator("#app").evaluate(
             '(el) => el.lastElementChild.classList.contains("preferences")'
         )
         expect(panel.get_by_text("读取时间", exact=True)).to_have_count(0)
         expect(panel.get_by_text("额度读取于", exact=False)).to_have_count(0)
         expect(panel.locator(".status")).to_contain_text("已更新")
-        expect(panel.get_by_text("演示模型", exact=True)).not_to_be_visible()
-        token_details = panel.locator(".compact-disclosure").filter(
-            has=panel.locator("summary").get_by_text("Token 明细", exact=True)
-        )
-        token_details.locator("summary").click()
-        expect(panel.locator(".compact-token-list")).to_be_visible()
-        notes = panel.locator(".compact-disclosure").filter(
-            has=panel.locator("summary").get_by_text("统计说明", exact=True)
-        )
-        notes.locator("summary").click()
-        expect(notes.locator(".compact-context-note")).to_be_visible()
-        app_details = panel.locator(".compact-disclosure").filter(
-            has=panel.locator("summary").get_by_text("按应用", exact=True)
-        )
-        app_details.locator("summary").click()
-        expect(app_details.get_by_text("OpenCode", exact=True)).to_be_visible()
-        model_details = panel.locator(".compact-disclosure").filter(
-            has=panel.locator("summary").get_by_text("按模型 · 前 10 项", exact=True)
-        )
-        model_details.locator("summary").click()
-        expect(model_details.get_by_text("演示模型", exact=True)).to_be_visible()
+        expect(panel.get_by_text("演示模型", exact=True)).to_be_visible()
         panel.get_by_role("button", name="刷新", exact=True).click()
         expect(panel.get_by_role("button", name="刷新", exact=True)).to_be_enabled()
         expect(panel.get_by_text("演示模型", exact=True)).to_be_visible()
-        expect(panel.locator(".compact-token-list")).to_be_visible()
+        expect(panel.locator(".metric-value")).to_have_count(4)
         page.reload()
-        expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
-        expect(panel.get_by_role("switch", name="紧凑模式", exact=True)).to_be_checked()
-        expect(panel.locator("#app")).to_have_attribute("data-density", "compact")
+        expect(panel.get_by_text("63.6%", exact=True)).to_be_visible()
+        expect(panel.get_by_role("tab", name="中等", exact=True)).to_have_attribute(
+            "aria-selected", "true"
+        )
+        expect(panel.locator(".quota-list")).to_have_attribute("data-density", "medium")
         for width in [280, 380, 900]:
             page.set_viewport_size({"width": width, "height": 1100})
             assert panel.locator("body").evaluate(
@@ -157,12 +157,14 @@ def main():
         page.evaluate("window.fail=true")
         panel.get_by_role("button", name="刷新", exact=True).click()
         expect(panel.get_by_text("额度读取失败", exact=True)).to_be_visible()
-        expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
+        expect(panel.get_by_text("63.6%", exact=True)).to_be_visible()
         page.evaluate("window.fail=false")
         panel.get_by_role("button", name="刷新", exact=True).click()
         expect(panel.get_by_text("额度读取失败", exact=True)).to_have_count(0)
-        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
-        expect(panel.locator("#app")).to_have_attribute("data-density", "comfortable")
+        panel.get_by_role("tab", name="宽松", exact=True).click()
+        expect(panel.locator(".quota-list")).to_have_attribute(
+            "data-density", "comfortable"
+        )
         assert panel.locator("#app").evaluate(
             '(el) => el.lastElementChild.classList.contains("preferences")'
         )
@@ -175,7 +177,7 @@ def main():
         panel.get_by_role("button", name="刷新", exact=True).click()
         expect(panel.get_by_text("额度读取失败", exact=True)).to_be_visible()
         expect(panel.get_by_text("消耗读取失败", exact=True)).to_be_visible()
-        expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
+        expect(panel.get_by_text("63.6%", exact=True)).to_be_visible()
         expect(panel.locator(".metric-value").first).to_have_text("336")
         panel.get_by_role("tab", name="30 天", exact=True).click()
         expect(panel.get_by_text("消耗读取失败", exact=True)).to_be_visible()
@@ -189,22 +191,22 @@ def main():
             (
                 "en-US",
                 "Magpie Usage",
-                "63.6% remaining",
+                "63.6%",
                 "Refresh",
                 "Could not read quotas",
             ),
-            ("zh-Hant-HK", "Magpie 用量", "剩餘 63.6%", "重新整理", "無法讀取額度"),
+            ("zh-Hant-HK", "Magpie 用量", "63.6%", "重新整理", "無法讀取額度"),
             (
                 "ja-JP",
                 "Magpie 使用量",
-                "残り 63.6%",
+                "63.6%",
                 "更新",
                 "上限を取得できませんでした",
             ),
             (
                 "fr-FR",
                 "Magpie Usage",
-                "63.6% remaining",
+                "63.6%",
                 "Refresh",
                 "Could not read quotas",
             ),
@@ -213,13 +215,13 @@ def main():
             expect(panel.get_by_role("heading", name=title, exact=True)).to_be_visible()
             expect(panel.get_by_text(remaining, exact=True)).to_be_visible()
             compact_label = {
-                "en-US": "Compact mode",
-                "zh-Hant-HK": "精簡模式",
-                "ja-JP": "コンパクト表示",
-                "fr-FR": "Compact mode",
+                "en-US": "Compact",
+                "zh-Hant-HK": "精簡",
+                "ja-JP": "コンパクト",
+                "fr-FR": "Compact",
             }[locale]
             expect(
-                panel.get_by_role("switch", name=compact_label, exact=True)
+                panel.get_by_role("tab", name=compact_label, exact=True)
             ).to_be_visible()
         assert page.evaluate("window.requests.length") == initial_requests
         page.evaluate("window.fail=true")
@@ -247,18 +249,20 @@ def main():
             '(cards) => cards.length === 2 && cards.every(card => getComputedStyle(card).borderTopWidth === "1px" && getComputedStyle(card).borderBottomWidth === "1px")'
         )
         panel.locator("#app").screenshot(path=str(output / "magpie-usage-dark.png"))
-        panel.get_by_role("switch", name="Compact mode", exact=True).click()
+        panel.get_by_role("tab", name="Medium", exact=True).click()
         expect(panel.locator(".compact-account")).to_have_count(2)
         panel.locator("#app").screenshot(
             path=str(output / "magpie-usage-compact-dark.png")
         )
         for locale, label in [
-            ("zh-Hant-HK", "精簡模式"),
-            ("ja-JP", "コンパクト表示"),
-            ("en-US", "Compact mode"),
+            ("zh-Hant-HK", "中等"),
+            ("ja-JP", "標準"),
+            ("en-US", "Medium"),
         ]:
             page.evaluate("(locale) => window.setLocale(locale)", locale)
-            expect(panel.get_by_role("switch", name=label, exact=True)).to_be_checked()
+            expect(panel.get_by_role("tab", name=label, exact=True)).to_have_attribute(
+                "aria-selected", "true"
+            )
             for width in [280, 380, 900]:
                 page.set_viewport_size({"width": width, "height": 1100})
                 assert panel.locator("body").evaluate(
@@ -266,10 +270,10 @@ def main():
                 )
         page.evaluate("sessionStorage.removeItem('preferences')")
         page.goto("http://127.0.0.1:58742/harness?surface=status")
-        expect(panel.get_by_text("剩余 63.6%")).to_be_visible()
+        expect(panel.get_by_text("63.6%", exact=True)).to_be_visible()
         expect(panel.get_by_text("消耗统计", exact=True)).not_to_be_visible()
         assert page.evaluate("window.requests.every(r => r.path === '/quotas')")
-        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
+        panel.get_by_role("tab", name="宽松", exact=True).click()
         expect(panel.locator(".quota")).to_have_count(2)
         for width in [280, 380, 900]:
             page.set_viewport_size({"width": width, "height": 1100})
@@ -285,7 +289,7 @@ def main():
         panel.locator("#app").screenshot(
             path=str(output / "magpie-work-status-cards.png")
         )
-        panel.get_by_role("switch", name="紧凑模式", exact=True).click()
+        panel.get_by_role("tab", name="中等", exact=True).click()
         expect(panel.locator(".compact-account")).to_have_count(2)
         assert (
             panel.locator(".compact-account")
@@ -294,6 +298,7 @@ def main():
                 '(el) => getComputedStyle(el).borderTopWidth === "1px" && parseFloat(getComputedStyle(el).paddingTop) >= 10'
             )
         )
+        mode_checks.check_ring_modes(page, panel, output)
         assert not errors, errors
         print(
             json.dumps(
@@ -315,6 +320,7 @@ def main():
                     "theme_switch": "pass",
                     "compact_mode_and_persistence": "pass",
                     "compact_disclosures_and_refresh": "pass",
+                    "remaining_used_and_layout_continuity": "pass",
                     "console_errors": errors,
                     "screenshot": str(output / "magpie-usage-panel.png"),
                 },

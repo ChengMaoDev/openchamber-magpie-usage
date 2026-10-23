@@ -30,7 +30,7 @@ for (const [entrypoint, outfile, target, format] of [
   if (!output) throw new Error(`未生成构建产物：${entrypoint}`);
   await Bun.write(resolve(root, outfile), `${await output.text()}${notice}`);
 }
-for (const name of ['index.html', 'style.css', 'compact.css']) {
+for (const name of ['index.html', 'style.css', 'compact.css', 'ring.css']) {
   await Bun.write(
     resolve(root, 'panel', name),
     Bun.file(resolve(root, 'src/panel', name)),

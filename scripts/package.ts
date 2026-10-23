@@ -15,6 +15,7 @@ const result = Bun.spawnSync(
     'icon.svg',
     'panel',
     'service',
+    'docs',
     'README.md',
     'README.zh-CN.md',
     'LICENSE',

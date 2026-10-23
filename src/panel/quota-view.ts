@@ -7,11 +7,16 @@ import {
 import type { I18n } from '../i18n/index.ts';
 import type { Quota } from '../shared/schema.ts';
 import { renderCompactQuotas } from './compact-quota.ts';
-import { element, remainingLabel, resetLabel } from './format.ts';
+import type { DisplayMode, QuotaDisplay } from './display-mode.ts';
+import { element, resetLabel } from './format.ts';
+import { quotaAccounts } from './quota-accounts.ts';
+import { quotaText, quotaValues } from './quota-values.ts';
+import { renderRingQuotas } from './ring-quota.ts';
 
 type Disposable = { dispose(): void };
 export function createQuotaView(root: HTMLElement) {
   let controls: Disposable[] = [];
+  const expandedRings = new Set<string>();
   const clear = () => {
     for (const control of controls) control.dispose();
     controls = [];
@@ -23,11 +28,29 @@ export function createQuotaView(root: HTMLElement) {
       quotas: readonly Quota[],
       i18n: I18n,
       showAccounts: boolean,
-      compactMode = false,
+      displayMode: DisplayMode = 'comfortable',
+      quotaDisplay: QuotaDisplay = 'remaining',
     ) {
       clear();
-      if (compactMode) {
-        controls = renderCompactQuotas(root, quotas, i18n, showAccounts);
+      if (displayMode === 'compact') {
+        controls = renderRingQuotas(
+          root,
+          quotas,
+          i18n,
+          showAccounts,
+          expandedRings,
+          quotaDisplay,
+        );
+        return;
+      }
+      if (displayMode === 'medium') {
+        controls = renderCompactQuotas(
+          root,
+          quotas,
+          i18n,
+          showAccounts,
+          quotaDisplay,
+        );
         return;
       }
       const { t } = i18n;
@@ -37,15 +60,13 @@ export function createQuotaView(root: HTMLElement) {
         );
         return;
       }
-      for (const quota of [...quotas].sort(
-        (a, b) => Number(Boolean(b.last)) - Number(Boolean(a.last)),
-      )) {
+      for (const { quota, name } of quotaAccounts(quotas)) {
         const card = element('article', 'quota');
         const heading = element('div', 'quota-heading');
         const identity = element('div', 'quota-identity');
-        identity.append(element('div', 'quota-title', quota.name));
+        identity.append(element('span', 'quota-title', name));
         if (quota.user && showAccounts)
-          identity.append(element('div', 'account muted', quota.user));
+          identity.append(element('span', 'account-inline', quota.user));
         heading.append(identity);
         if (quota.last)
           controls.push(
@@ -72,23 +93,25 @@ export function createQuotaView(root: HTMLElement) {
             ),
           );
           caption.append(
-            element('span', 'window-value', remainingLabel(window, i18n)),
+            element(
+              'span',
+              'window-value',
+              quotaText(window, quotaDisplay, i18n),
+            ),
           );
           row.append(caption);
-          const used =
-            window.used ??
-            (window.remaining === undefined
-              ? undefined
-              : 100 - window.remaining);
-          if (used !== undefined) {
+          const values = quotaValues(window);
+          const used = values.used;
+          const value = values[quotaDisplay];
+          if (used !== undefined && value !== undefined) {
             const tone: Tone =
               used >= 90 ? 'error' : used >= 70 ? 'warning' : 'primary';
             const progress = element('div', 'quota-progress');
             controls.push(
               mountProgress(progress, {
-                value: used,
+                value,
                 tone,
-                label: t('used', { name: window.name }),
+                label: `${window.name} ${t(quotaDisplay === 'used' ? 'showUsed' : 'showRemaining')}`,
               }),
             );
             row.append(progress);

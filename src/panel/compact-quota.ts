@@ -1,13 +1,17 @@
 import { mountEmpty, mountProgress } from '@openchamber/sdk/ui';
 import type { I18n } from '../i18n/index.ts';
 import type { Quota } from '../shared/schema.ts';
-import { element, remainingLabel, resetLabel } from './format.ts';
+import type { QuotaDisplay } from './display-mode.ts';
+import { element, resetLabel } from './format.ts';
+import { quotaAccounts } from './quota-accounts.ts';
+import { quotaText, quotaValues } from './quota-values.ts';
 
 export function renderCompactQuotas(
   root: HTMLElement,
   quotas: readonly Quota[],
   i18n: I18n,
   showAccounts: boolean,
+  quotaDisplay: QuotaDisplay,
 ) {
   const controls: { dispose(): void }[] = [];
   const { t } = i18n;
@@ -16,9 +20,7 @@ export function renderCompactQuotas(
       mountEmpty(root, { title: t('noQuotas'), body: t('noQuotasBody') }),
     );
   }
-  for (const quota of [...quotas].sort(
-    (a, b) => Number(Boolean(b.last)) - Number(Boolean(a.last)),
-  )) {
+  for (const { quota, name: accountName } of quotaAccounts(quotas)) {
     const account = element('article', 'compact-account');
     const heading = element('div', 'compact-account-heading');
     const name = element('div', 'compact-account-name');
@@ -28,27 +30,27 @@ export function renderCompactQuotas(
       dot.setAttribute('aria-label', t('lastUsed'));
       name.append(dot);
     }
-    name.append(element('strong', '', quota.name));
+    name.append(element('strong', '', accountName));
+    if (quota.user && showAccounts)
+      name.append(element('span', 'account-inline', quota.user));
     if (quota.plan) name.append(element('span', 'compact-plan', quota.plan));
     heading.append(name);
     if (quota.balance)
       heading.append(element('span', 'compact-balance', quota.balance));
     account.append(heading);
-    if (quota.user && showAccounts)
-      account.append(element('p', 'compact-account-user', quota.user));
     if (quota.error) account.append(element('p', 'error', quota.error));
     for (const window of quota.windows) {
       const row = element('div', 'compact-window');
       const label = [window.name, window.model].filter(Boolean).join(' · ');
-      const used =
-        window.used ??
-        (window.remaining === undefined ? undefined : 100 - window.remaining);
+      const values = quotaValues(window);
+      const used = values.used;
+      const value = values[quotaDisplay];
       const meter = element('div', 'compact-meter');
-      if (used !== undefined)
+      if (used !== undefined && value !== undefined)
         controls.push(
           mountProgress(meter, {
-            value: used,
-            label: t('used', { name: label }),
+            value,
+            label: `${label} ${t(quotaDisplay === 'used' ? 'showUsed' : 'showRemaining')}`,
             tone: used >= 90 ? 'error' : used >= 70 ? 'warning' : 'primary',
           }),
         );
@@ -62,7 +64,11 @@ export function renderCompactQuotas(
       const reset = resetLabel(resetAt, Date.now(), i18n);
       row.append(
         element('span', 'compact-window-name', label),
-        element('span', 'compact-remaining', remainingLabel(window, i18n)),
+        element(
+          'span',
+          'compact-remaining',
+          quotaText(window, quotaDisplay, i18n),
+        ),
         meter,
       );
       if (reset || window.display)

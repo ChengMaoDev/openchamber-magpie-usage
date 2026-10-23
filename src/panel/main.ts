@@ -4,6 +4,12 @@ import { z } from 'zod';
 import { createI18n } from '../i18n/index.ts';
 import { periodSchema } from '../shared/schema.ts';
 import { createLoader, createRefreshQueue } from './data.ts';
+import {
+  displayModeSchema,
+  quotaDisplaySchema,
+  restoreDisplayMode,
+} from './display-mode.ts';
+import { rememberFocus } from './focus.ts';
 import { createView, type PanelState } from './view.ts';
 
 const host = connectHost();
@@ -11,6 +17,10 @@ const root = document.querySelector<HTMLElement>('#app');
 if (!root) throw new Error('Missing panel root');
 let updateContext: ((context: HostReadyContext) => void) | undefined;
 host.onReady((context) => {
+  if (context.surface !== 'panel' && context.surface !== 'status') {
+    root.replaceChildren();
+    return;
+  }
   applyHostReady(context, document.documentElement);
   if (updateContext) updateContext(context);
   else updateContext = mount(root, context);
@@ -22,7 +32,8 @@ function mount(container: HTMLElement, context: HostReadyContext) {
     i18n: createI18n(context.locale),
     period: 'today',
     showAccounts: false,
-    compactMode: compact,
+    displayMode: compact ? 'medium' : 'comfortable',
+    quotaDisplay: 'remaining',
     busy: false,
     quotas: null,
     usage: null,
@@ -35,11 +46,14 @@ function mount(container: HTMLElement, context: HostReadyContext) {
   let initialized = false;
   let userSelectedPeriod = false;
   let userSelectedAccounts = false;
-  let userSelectedCompactMode = false;
+  let userSelectedDisplayMode = false;
+  let userSelectedQuotaDisplay = false;
   const loader = createLoader(host, compact);
   const paint = () => {
     if (disposed) return;
+    const restoreFocus = rememberFocus(container);
     view.paint(state);
+    restoreFocus();
     if (compact) host.setHeight(Math.min(320, container.scrollHeight + 12));
   };
   const queue = createRefreshQueue(async (period, fresh) => {
@@ -74,7 +88,7 @@ function mount(container: HTMLElement, context: HostReadyContext) {
       paint();
     });
   };
-  const view = createView(container, compact, {
+  const view = createView(container, context.surface, {
     refresh: () => {
       void queue.request(state.period, true);
     },
@@ -93,13 +107,28 @@ function mount(container: HTMLElement, context: HostReadyContext) {
       save('showAccounts', value);
       paint();
     },
-    compactMode: (value) => {
-      userSelectedCompactMode = true;
-      state = { ...state, compactMode: value };
-      save('compactMode', value);
+    displayMode: (value) => {
+      const mode = displayModeSchema.safeParse(value);
+      if (!mode.success || mode.data === state.displayMode) return;
+      userSelectedDisplayMode = true;
+      state = { ...state, displayMode: mode.data };
+      save('displayMode', mode.data);
+      paint();
+    },
+    quotaDisplay: () => {
+      userSelectedQuotaDisplay = true;
+      const quotaDisplay = state.quotaDisplay === 'used' ? 'remaining' : 'used';
+      state = { ...state, quotaDisplay };
+      save('quotaDisplay', quotaDisplay);
       paint();
     },
   });
+  const resize = compact
+    ? new ResizeObserver(() =>
+        host.setHeight(Math.min(320, container.scrollHeight + 12)),
+      )
+    : null;
+  resize?.observe(container);
   paint();
   const timer = window.setInterval(() => {
     if (
@@ -116,6 +145,8 @@ function mount(container: HTMLElement, context: HostReadyContext) {
       host.storage.get('period'),
       host.storage.get('showAccounts'),
       host.storage.get('compactMode'),
+      host.storage.get('displayMode'),
+      host.storage.get('quotaDisplay'),
     ]);
     if (disposed) return;
     const period =
@@ -126,10 +157,9 @@ function mount(container: HTMLElement, context: HostReadyContext) {
       saved[1].status === 'fulfilled'
         ? z.boolean().safeParse(saved[1].value)
         : null;
-    const compactMode =
-      saved[2].status === 'fulfilled'
-        ? z.boolean().safeParse(saved[2].value)
-        : null;
+    const quotaDisplay = quotaDisplaySchema.safeParse(
+      saved[4].status === 'fulfilled' ? saved[4].value : undefined,
+    );
     state = {
       ...state,
       period:
@@ -138,10 +168,17 @@ function mount(container: HTMLElement, context: HostReadyContext) {
         !userSelectedAccounts && accounts?.success
           ? accounts.data
           : state.showAccounts,
-      compactMode:
-        !userSelectedCompactMode && compactMode?.success
-          ? compactMode.data
-          : state.compactMode,
+      displayMode: userSelectedDisplayMode
+        ? state.displayMode
+        : restoreDisplayMode(
+            saved[3].status === 'fulfilled' ? saved[3].value : undefined,
+            saved[2].status === 'fulfilled' ? saved[2].value : undefined,
+            state.displayMode,
+          ),
+      quotaDisplay:
+        !userSelectedQuotaDisplay && quotaDisplay.success
+          ? quotaDisplay.data
+          : state.quotaDisplay,
       storageError:
         saved.find((item) => item.status === 'rejected')?.reason ?? null,
     };
@@ -154,6 +191,7 @@ function mount(container: HTMLElement, context: HostReadyContext) {
       disposed = true;
       queue.dispose();
       window.clearInterval(timer);
+      resize?.disconnect();
       view.dispose();
       host.dispose();
     },

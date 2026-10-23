@@ -1,0 +1,149 @@
+.quota-list[data-density="compact"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 80px), 1fr));
+  gap: 10px 6px;
+  margin-top: 10px;
+  align-items: start;
+}
+.ring-account {
+  min-width: 0;
+}
+.ring-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  list-style: none;
+  cursor: pointer;
+  border-radius: var(--oc-radius);
+}
+.ring-summary::-webkit-details-marker {
+  display: none;
+}
+.ring-summary:hover {
+  background: var(--oc-muted-surface);
+}
+.ring-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  font-size: 0.67rem;
+}
+.ring-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ring-heading:has(.account-inline) .ring-name-text {
+  max-width: 48%;
+  flex-shrink: 0;
+}
+.ring-heading .account-inline {
+  font-size: 0.62rem;
+}
+.ring-error {
+  font-weight: 700;
+  color: var(--oc-error-text);
+}
+.ring-window-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+}
+.quota-ring {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: var(--oc-primary);
+}
+.quota-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  fill: none;
+  stroke-width: 3;
+}
+.ring-track {
+  stroke: var(--oc-border);
+}
+.ring-fill {
+  stroke: currentColor;
+  stroke-dasharray: var(--value) 100;
+  stroke-linecap: round;
+}
+[data-tone="warning"] .ring-fill {
+  stroke: var(--oc-warning-text);
+}
+[data-tone="error"] .ring-fill {
+  stroke: var(--oc-error-text);
+}
+[data-tone="unknown"] .ring-track {
+  stroke-dasharray: 3 5;
+}
+[data-tone="unknown"] .ring-fill,
+.quota-ring[data-empty="true"] .ring-fill {
+  display: none;
+}
+.ring-unknown {
+  color: var(--oc-muted);
+  font-size: 0.75rem;
+}
+.ring-window-info {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 3px;
+}
+.ring-window {
+  max-width: 100%;
+  color: var(--oc-muted);
+  font-size: 0.6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ring-value {
+  color: var(--oc-fg);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+}
+.ring-unavailable {
+  color: var(--oc-muted);
+  font-size: 0.62rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ring-account[open] {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 8px;
+}
+.ring-detail {
+  padding: 8px;
+  border-left: 1px solid var(--oc-border);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.ring-detail p {
+  margin-top: 4px;
+}
+#app .quota-list.is-empty {
+  display: block;
+  border: 0;
+}
